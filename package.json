@@ -1,0 +1,13 @@
+{
+  "name": "slides-nix-supply-chain",
+  "version": "1.0.0",
+  "description": "how nix mitigates supply chain attacks",
+  "scripts": {
+    "build": "marp presentation.md"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@marp-team/marp-cli": "^4.2.3"
+  }
+}
