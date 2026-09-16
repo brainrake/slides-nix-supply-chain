@@ -106,6 +106,8 @@ Every dependency change requires lockfile change.
 
 ## Mitigations and inspection
 
+Nix enables novel and precise observability workflows.
+
 ```sh
 nix why-depends nixpkgs#firefox nixpkgs#glibc
 nix path-info -r nixpkgs#firefox
