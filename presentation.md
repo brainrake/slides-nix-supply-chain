@@ -16,9 +16,9 @@ Malicious code injected via dependencies, build tools, or package registries.
 
 # How Nix defends
 
-Nix is a functional, immutable system.
+Nix is a purely declarative, immutable system.
 
-Most protections are consequences of this core design, not bolt-on mitigations.
+Most protections are consequences of this **core design**, not bolt-on mitigations.
 
 - pure evaluation
 - sandboxed builds
@@ -40,7 +40,7 @@ Most protections are consequences of this core design, not bolt-on mitigations.
 ## Build Sandbox
 
 - **only** inputs: hash-locked deps and build script
-- no ambient `/usr`, user home, credentials, or network
+- no ambient `/usr`, `/var`, `/etc`, user home, credentials, or network
 - compiler/toolchain deps come from derivation closure
 - network access only possible when ouput hash is known _before_ the build
 - **only** outputs: package dir created
