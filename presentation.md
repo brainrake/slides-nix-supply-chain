@@ -10,20 +10,23 @@ title: How Nix defends against supply chain attacks
 Malicious code injected via dependencies, build tools, or package registries.
 
 - traditional package managers trust remote servers, mutable state, and post-install scripts
-- example: `event-stream` npm compromise (2018) shipped malicious dependency to steal wallet credentials from downstream apps
 - Nix doesn't make malicious source impossible, but controls when and how it is run and reduces the blast radius
 
 ---
 
 # How Nix defends
 
-Nix is a functional, immutable system. Most protections are consequences of this core design, not bolt-on mitigations.
+Nix is a functional, immutable system.
+
+Most protections are consequences of this core design, not bolt-on mitigations.
 
 - pure evaluation
 - sandboxed builds
 - immutable store
-- hash-addressed inputs and locked flakes
-- no ambient mutable state or post-install mutation
+- hash-locked inputs
+- no ambient mutable state
+- no post-install mutation
+- atomic update and rollback
 
 ---
 
@@ -36,25 +39,24 @@ Nix is a functional, immutable system. Most protections are consequences of this
 
 ## Build Sandbox
 
-- build runs with declared inputs only
+- **only** inputs: hash-locked deps and build script
 - no ambient `/usr`, user home, credentials, or network
-- compiler/toolchain dependencies come from derivation closure
-- network access only possible when ouput hash is known before build
-
-Only effect of build is: output directory created.
+- compiler/toolchain deps come from derivation closure
+- network access only possible when ouput hash is known _before_ the build
+- **only** outputs: package dir created
 
 ---
 
 ## Immutable Store
 
-- packages live under `/nix/store/<hash>-name`
-- path includes hash of all inputs (deps, build script, build options)
-- store paths are immutable after build
+- packages live under **read-only** `/nix/store/<hash>-name`
+- package path includes hash of all inputs (deps, build script, build options)
+- store paths are **immutable** once built
 - multiple versions coexist without overwriting each other (hash is different)
-- rollback works because old closures stay addressable
+- updates and rollbacks are **atomic** (symlink swap)
 
 All packages live in immutable, hash-addressed store.
- 
+
 ---
 
 ## No Mutable State
@@ -71,9 +73,9 @@ Mutation moves from user machines to reproducible build plans.
 ## Binary Cache
 
 - binary substituters serve prebuilt store paths
-- Nix verifies signatures from trusted public keys
+- Nix verifies **signatures** from trusted public keys
+- cache compromise alone does not bypass signature verification
 - content hashes bind output identity
-- cache compromise alone should not bypass signature verification
 
 Trust becomes explicit: which cache keys are trusted, which inputs are locked, which derivations produce outputs.
 
@@ -82,10 +84,11 @@ Trust becomes explicit: which cache keys are trusted, which inputs are locked, w
 ## Input locking
 
 - all nix builds have hash locked inputs.
-- ebuilds use same inputs, unless hash is changed in pacakge definition
-- flakes manage input hashes in a lockfile
+- subsequent builds use same inputs, unless hash is changed in pacakge definition
 
-No part of your software relies on pre-installed stuff on build or run machine.  *Every* dependency change requires lockfile change.
+No part of your software relies on pre-installed packages on build or run machine.
+
+Every dependency change requires lockfile change.
 
 ---
 
@@ -94,10 +97,10 @@ No part of your software relies on pre-installed stuff on build or run machine. 
 - malicious upstream source
 - compromised `nixpkgs` maintainer or review path
 - random flake from GitHub with dangerous build logic
-- trusted binary cache key compromised
+- trusted binary cache private key compromised
 - developer disables sandbox or trusts wrong substituter
 
-"I ran a program from the internet" is kind of an invalid threat model so there are limits to any approach.
+"I ran a program from the internet" is an infinitely scoped threat model so there are limits to any approach.
 
 ---
 
@@ -142,10 +145,11 @@ Build machine compromise gets less leverage when build has narrow inputs and no 
 
 ## How Nix defends production servers
 
-- deploy: atomic update to new immutable system
-- instant atomic rollback to known good state
+- **immutable** system configuration and package set
+- deploy: **atomic** update to new version
+- instant rollback to known good state
 - runtime closure contains only declared dependencies
-- binary cache signatures verify substituted artifacts before activation
+- binary cache signatures verify downloaded packages
 
 Production server consumes verified closures instead of mutating itself during deploy.
 
